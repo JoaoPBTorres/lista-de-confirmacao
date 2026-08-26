@@ -150,7 +150,7 @@ function renderFamilyCard(){
     <label class="field-label">${fam.name}</label>
     <div class="muted" style="margin-bottom:10px;">Marque quem vai comparecer ao casamento</div>
     ${rows}
-    <button class="btn-primary" id="submit-rsvp" disabled>Confirmar presença</button>
+    <button class="btn-primary" id="submit-rsvp" disabled>Confirmar resposta</button>
   `;
 }
  
