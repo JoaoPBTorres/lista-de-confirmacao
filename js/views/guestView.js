@@ -65,7 +65,10 @@ function renderFamilyCard(state) {
       <button id="back-search" class="link-btn">← voltar</button>
     </div>
     <label class="field-label">${fam.name}</label>
-    <div class="muted" style="margin-bottom:10px;">Marque quem vai comparecer ao casamento</div>
+    <div class="muted" style="margin-bottom:10px;">
+      Marque quem vai comparecer ao casamento — pode confirmar só a sua
+      presença agora e os outros integrantes respondem quando puderem.
+    </div>
     ${rows}
     <button class="btn-primary" id="submit-rsvp" disabled>Confirmar presença</button>
   `;
@@ -119,7 +122,11 @@ function renderResults(state, store) {
 
 async function submitRsvp(state, store, repository) {
   const fam = state.selectedFamily;
-  fam.members.forEach(m => { m.attending = state.responses[m.id]; });
+  fam.members.forEach(m => {
+    if (state.responses[m.id] !== undefined) {
+      m.attending = state.responses[m.id];
+    }
+  });
   fam.respondedAt = new Date().toISOString();
   const families = state.families.map(f => (f.id === fam.id ? fam : f));
   await repository.save(families);
@@ -130,10 +137,6 @@ export function bindGuestEvents(state, store, repository) {
   const searchBox = document.getElementById('search-box');
   if (searchBox) {
     searchBox.addEventListener('input', e => {
-      // Atualizamos o estado diretamente (sem passar por store.setState)
-      // de propósito: setState dispara um re-render completo do #app,
-      // o que recriaria o <input> e derrubaria o foco/cursor a cada letra
-      // digitada. Aqui só a lista de resultados precisa mudar.
       const current = store.getState();
       current.query = e.target.value;
       renderResults(current, store);
@@ -160,8 +163,8 @@ export function bindGuestEvents(state, store, repository) {
   const submitBtn = document.getElementById('submit-rsvp');
   if (submitBtn) {
     const fam = state.selectedFamily;
-    const allAnswered = fam.members.every(m => state.responses[m.id] !== undefined);
-    submitBtn.disabled = !allAnswered;
+    const anyAnswered = fam.members.some(m => state.responses[m.id] !== undefined);
+    submitBtn.disabled = !anyAnswered;
     submitBtn.addEventListener('click', () => submitRsvp(state, store, repository));
   }
 
