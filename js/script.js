@@ -102,7 +102,7 @@ function renderGuestFlow(){
  
   return `
     <header class="hero">
-      <div class="eyebrow">Vamos nos casar</div>
+      <div class="eyebrow">Vamos nos casar!</div>
       <h1 class="title">${COUPLE_NAMES}</h1>
       ${branchDivider()}
       <div class="subtitle">Será uma alegria ter você com a gente</div>
