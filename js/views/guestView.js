@@ -121,16 +121,28 @@ function renderResults(state, store) {
 }
 
 async function submitRsvp(state, store, repository) {
-  const fam = state.selectedFamily;
-  fam.members.forEach(m => {
-    if (state.responses[m.id] !== undefined) {
-      m.attending = state.responses[m.id];
-    }
+  const famId = state.selectedFamily.id;
+  const responses = state.responses;
+  let notFound = false;
+
+  const families = await repository.mergeAndSave(fresh => {
+    const fam = fresh.find(f => f.id === famId);
+    if (!fam) { notFound = true; return fresh; }
+    fam.members.forEach(m => {
+      if (responses[m.id] !== undefined) m.attending = responses[m.id];
+    });
+    fam.respondedAt = new Date().toISOString();
+    return fresh;
   });
-  fam.respondedAt = new Date().toISOString();
-  const families = state.families.map(f => (f.id === fam.id ? fam : f));
-  await repository.save(families);
-  store.setState({ families, view: 'success' });
+
+  if (notFound) {
+    alert('Não encontramos mais sua família na lista. Por favor, fale com os noivos.');
+    store.setState({ families, view: 'guest' });
+    return;
+  }
+
+  const updatedFam = families.find(f => f.id === famId);
+  store.setState({ families, selectedFamily: updatedFam, view: 'success' });
 }
 
 export function bindGuestEvents(state, store, repository) {
@@ -165,7 +177,11 @@ export function bindGuestEvents(state, store, repository) {
     const fam = state.selectedFamily;
     const anyAnswered = fam.members.some(m => state.responses[m.id] !== undefined);
     submitBtn.disabled = !anyAnswered;
-    submitBtn.addEventListener('click', () => submitRsvp(state, store, repository));
+    submitBtn.addEventListener('click', async () => {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando…';
+      await submitRsvp(state, store, repository);
+    });
   }
 
   const goAdmin = document.getElementById('go-admin');
