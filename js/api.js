@@ -4,8 +4,7 @@ import { uid } from './utils.js';
 export const FamilyRepository = {
   async load() {
     try {
-      const res = await fetch(API_URL, { method: 'GET' });
-      const data = await res.json();
+      const data = await this._fetchRaw();
       if (data && data.length) {
         return data;
       }
@@ -22,7 +21,11 @@ export const FamilyRepository = {
     }
   },
 
-  // Persiste a lista completa de famílias.
+  async _fetchRaw() {
+    const res = await fetch(API_URL, { method: 'GET' });
+    return res.json();
+  },
+
   async save(families) {
     try {
       await fetch(API_URL, {
@@ -33,5 +36,19 @@ export const FamilyRepository = {
     } catch (e) {
       alert('Não foi possível salvar. Verifique sua conexão e tente novamente.');
     }
+  },
+
+  async mergeAndSave(applyChange) {
+    let fresh;
+    try {
+      fresh = await this._fetchRaw();
+      if (!fresh || !fresh.length) fresh = [];
+    } catch (e) {
+      alert('Não foi possível confirmar a lista mais recente antes de salvar. Tente novamente.');
+      throw e;
+    }
+    const updated = applyChange(fresh);
+    await this.save(updated);
+    return updated;
   }
 };
